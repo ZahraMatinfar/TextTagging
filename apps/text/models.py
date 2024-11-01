@@ -15,7 +15,7 @@ class Text(BaseModel):
         verbose_name_plural = _("texts")
 
     def __str__(self):
-        return f"Text {self.id} in {self.dataset.name}"
+        return f"{self.content}"
 
     
 class Tag(BaseModel):
