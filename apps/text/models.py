@@ -21,11 +21,18 @@ class Text(BaseModel):
 class Tag(BaseModel):
     text = models.ForeignKey(Text, on_delete=models.CASCADE, related_name="tags", verbose_name=_("text"))
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="tags", verbose_name=_("category"))
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name=_("user"))
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name=_("user"), related_name="tags")
 
     class Meta:
         verbose_name = _("tag")
         verbose_name_plural = _("tags")
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'text', 'category'],
+                name='unique_user_text_category_tag'
+            )
+        ]
 
     def __str__(self):
         return f"Tagging of {self.text} with {self.category}"
