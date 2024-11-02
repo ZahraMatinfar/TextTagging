@@ -11,4 +11,8 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.username}"
+    
+    @property
+    def is_admin(self):
+        return self.is_staff or self.is_superuser
 

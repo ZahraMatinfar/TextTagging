@@ -1,38 +1,77 @@
-# views.py
-from rest_framework import viewsets, status
+from django.contrib.auth import get_user_model, authenticate
+from apps.account.serializers import RegisterSerializer, LoginSerializer
+from drf_spectacular.utils import OpenApiResponse, extend_schema, OpenApiExample
+from rest_framework import status, viewsets
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from django.contrib.auth import get_user_model
-from .serializers import UserSerializer
-from django.contrib.auth import authenticate
+from rest_framework.decorators import action
 from rest_framework.authtoken.models import Token
-from django.utils.translation import gettext_lazy as _
+from drf_spectacular.types import OpenApiTypes
 
+
+# Create your views here.
 
 User = get_user_model()
 
 
-class RegisterViewSet(viewsets.ViewSet):
-    permission_classes = [AllowAny]
+class AuthViewSet(viewsets.ViewSet):
+    
+    @extend_schema(
+        summary="Register a new user",
+        request=RegisterSerializer,
+        responses={
+            201: OpenApiResponse(
+                response=OpenApiTypes.OBJECT,
+                description="User registered successfully",
+                examples=[
+                OpenApiExample(
+                    "Successful registration",
+                    value={
+                        "user": {
+                            "username": "testuser"
+                        },
+                    }
+                )
+            ],
+            ),
+            400: OpenApiResponse(description="Invalid data")
+        }
+    )
+    @action(detail=False, methods=['post'], url_path='register', url_name='register')
+    def register(self, request):
+        
+        serializer = RegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True) 
+        user = serializer.save()
+        Token.objects.get_or_create(user=user)
+        return Response(
+            {"user": serializer.data}, 
+            status=status.HTTP_201_CREATED
+        )
 
-    def create(self, request):
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response({"message": _("User registered successfully!")}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    @extend_schema(
+        summary="Login a user with username and password",
+        request=LoginSerializer,
+        responses={
+            200: OpenApiResponse(description="Successful login"),
+            400: OpenApiResponse(description="Invalid credentials")
+        }
+    )
+    @action(detail=False, methods=['post'], url_path='login', url_name="login")
+    def login(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
+        username = serializer.validated_data['username']
+        password = serializer.validated_data['password']
 
-class LoginViewSet(viewsets.ViewSet):
-    permission_classes = [AllowAny]
-
-    def create(self, request):
-        username = request.data.get("username")
-        password = request.data.get("password")
-
+        # Authenticate user using username as the 'username'
         user = authenticate(request, username=username, password=password)
+
         if user is not None:
-            # Get or create a token for the user
+            # Generate or get authentication token
             token, created = Token.objects.get_or_create(user=user)
             return Response({"token": token.key}, status=status.HTTP_200_OK)
-        return Response({"error": _("Invalid credentials")}, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            # Return error if authentication fails
+            return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+    
