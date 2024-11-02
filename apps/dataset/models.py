@@ -25,4 +25,22 @@ class Category(BaseModel):
 
     def __str__(self):
         return f"{self.name} ({'Active' if self.is_active else 'Inactive'})"
+    
 
+class DatasetReport(BaseModel):
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name='reports', verbose_name=_("dataset"))
+    report_file = models.FileField(upload_to='reports/', verbose_name=_("reeport file"))
+
+
+    class Meta:
+        verbose_name = _("dataset report")
+        verbose_name_plural = _("dataset reports")
+        ordering = ["-created_time", "-updated_time"]
+
+    def __str__(self):
+        return f"Report for {self.dataset.name}"
+    
+    @property
+    def dataset_name(self):
+        return self.dataset.name
+    dataset_name.fget.short_description = _("dataset name")   
