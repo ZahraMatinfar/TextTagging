@@ -164,3 +164,11 @@ SPECTACULAR_SETTINGS = {
 }
 
 AUTH_USER_MODEL = 'account.User'
+
+# Redis configuration as the message broker
+
+CELERY_BROKER_URL = env("REDIS_HOST")
+CELERY_RESULT_BACKEND = env("REDIS_HOST")
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
