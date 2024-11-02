@@ -6,7 +6,10 @@ from django.utils.translation import gettext_lazy as _
 class TextSerializer(serializers.ModelSerializer):
     class Meta:
         model = Text
-        fields = ('id', 'content')
+        fields = ('id', 'content', 'dataset')
+        extra_kwargs = {
+            "dataset": {"write_only": True},
+        }
 
 
 class TagSerializer(serializers.ModelSerializer):
