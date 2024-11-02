@@ -21,9 +21,8 @@ class DatasetListSerializer(serializers.ModelSerializer):
 
 
 class DatasetSerializer(serializers.ModelSerializer):
-    # categories = CategorySerializer(many=True, read_only=True)
     categories = serializers.SerializerMethodField()
-    texts = TextSerializer(many=True, read_only=True)
+    texts = serializers.SerializerMethodField()
 
     class Meta:
         model = Dataset
@@ -45,3 +44,14 @@ class DatasetSerializer(serializers.ModelSerializer):
             )
         )
         return CategorySerializer(categories_with_counts, many=True).data
+
+    def get_texts(self, obj):
+        request = self.context.get("request")
+        texts = obj.texts.filter(is_active=True)
+
+        # Apply search filter if query parameter 'search' is present
+        search_query = request.query_params.get('search')
+        if search_query:
+            texts = texts.filter(content__icontains=search_query)
+
+        return TextSerializer(texts, many=True).data
