@@ -11,7 +11,10 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = fields = ['id', 'name', 'tag_count']
+        fields = ['id', 'name', 'tag_count', 'dataset']
+        extra_kwargs = {
+            "dataset": {"write_only": True},
+        }
 
 
 class DatasetListSerializer(serializers.ModelSerializer):
